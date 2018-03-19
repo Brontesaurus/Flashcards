@@ -16,6 +16,7 @@ public class Deck implements Parcelable {
 
     public Deck(Parcel parcel) {
         name = parcel.readString();
+        cards = new ArrayList<>();
         parcel.readTypedList(cards, Card.CREATOR);
     }
 

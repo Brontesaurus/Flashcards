@@ -1,13 +1,12 @@
 package bronte.flashcards;
 
 import android.content.Intent;
-import android.os.Parcel;
-import android.os.Parcelable;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.Button;
 import android.widget.LinearLayout;
+import android.widget.Toast;
 
 import java.util.ArrayList;
 
@@ -28,8 +27,11 @@ public class MainActivity extends AppCompatActivity {
 
         LinearLayout mainLayout = findViewById(R.id.main_layout);
 
-        //ArrayList<Button> deckButtons = new ArrayList<>();
+        // Loop through decks and create buttons for them, so they can be opened and viewed.
         for (final Deck deck : decks) {
+            String text = "Adding deck called " + deck.getName();
+            Toast toast = Toast.makeText(getApplicationContext(), text, Toast.LENGTH_SHORT);
+            toast.show();
             final Button button = new Button(this);
             button.setText(deck.getName());
             button.setOnClickListener(new View.OnClickListener() {
@@ -42,8 +44,20 @@ public class MainActivity extends AppCompatActivity {
             });
             mainLayout.addView(button);
         }
+
+        // Make the new deck button do something.
+        Button newDeckButton = findViewById(R.id.new_deck_button);
+        newDeckButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                String text = "This button doesn't do anything yet fam.";
+                Toast toast = Toast.makeText(getApplicationContext(), text, Toast.LENGTH_SHORT);
+                toast.show();
+            }
+        });
     }
 
+    // Open a deck and view it. Starts a new deck viewing activity.
     private void openDeck(Deck deck) {
         Intent intent = new Intent(this, ViewDeckActivity.class);
         intent.putExtra("deck", deck);
