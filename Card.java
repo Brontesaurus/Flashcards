@@ -44,6 +44,10 @@ public class Card implements Parcelable {
         return explanation;
     }
 
+    public boolean hasExplanation() {
+        return !explanation.isEmpty();
+    }
+
     /* Parcelable Things */
 
     // Required for parcelable, but is ignored.

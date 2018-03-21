@@ -28,6 +28,10 @@ public class Deck implements Parcelable {
         return cards;
     }
 
+    public int size() {
+        return cards.size();
+    }
+
     public void addCard(Card card) {
         cards.add(card);
     }
