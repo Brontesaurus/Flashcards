@@ -16,7 +16,8 @@ public class ViewDeckActivity extends AppCompatActivity {
     private Deck deck;
     private Card currentCard; // Current card being displayed to the user.
     private int cardIndex = 0; // The index of the current card being displayed to the user.
-    private boolean cardDirection = true; // Whether the flashcard is showing the front or back.
+    // Whether the flashcard is showing the front or back.
+    private boolean cardDirection = CARD_FRONT;
     // Whether the explanation for the current card is currently being displayed to the user.
     private boolean showingExplanation = false;
     private TextView flashcard;
