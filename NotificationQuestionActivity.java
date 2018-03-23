@@ -6,6 +6,7 @@ import android.widget.TextView;
 
 /**
  * An activity only activated after opening the app from a notification asking about a card.
+ * Currently not used, but still exists in case I want to use it in the future.
  */
 public class NotificationQuestionActivity extends AppCompatActivity {
 

@@ -15,7 +15,7 @@ import android.widget.Toast;
 public class ViewDeckActivity extends AppCompatActivity {
     private Deck deck;
     private Card currentCard; // Current card being displayed to the user.
-    private int cardIndex = 0; // The index of the current card being displayed to the user.
+    private int cardIndex; // The index of the current card being displayed to the user.
     // Whether the flashcard is showing the front or back.
     private boolean cardDirection = CARD_FRONT;
     // Whether the explanation for the current card is currently being displayed to the user.
@@ -48,14 +48,22 @@ public class ViewDeckActivity extends AppCompatActivity {
         // Get deck contents from intent.
         Intent intent = getIntent();
         deck = intent.getParcelableExtra("deck");
+        // Card index is only sent when activity is starting from a notification. When the activity
+        // is starting from selecting the deck within the app, this value is not sent, and will
+        // default to 0.
+        cardIndex = intent.getIntExtra("card_index", 0);
 
         // Put deck contents in card.
         flashcard = findViewById(R.id.card_text);
-        currentCard = deck.getCards().get(0); // Get first card in deck.
+        currentCard = deck.getCards().get(cardIndex); // Get current card in deck.
         flashcard.setText(currentCard.getFront());
 
-        // Disable prev button since at start.
-        disableButton(prevButton);
+        // Disable a button if at start or end.
+        if (cardIndex == 0) {
+            disableButton(prevButton);
+        } else if (cardIndex == deck.size() - 1) {
+            disableButton(nextButton);
+        }
     }
 
     public void onClickFlashcard(View view) {

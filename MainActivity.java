@@ -18,16 +18,18 @@ import java.util.Calendar;
 
 public class MainActivity extends AppCompatActivity {
     private ArrayList<Deck> decks;
-    private Button notificationSettingsButton;
+    private Deck testDeck;
+    private AlarmManager alarmManager;
+    private PendingIntent pendingAlarmIntent;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         decks = new ArrayList<>();
-        notificationSettingsButton = findViewById(R.id.button_notif);
+        alarmManager = (AlarmManager) getSystemService(Context.ALARM_SERVICE);
 
-        Deck testDeck = new Deck("test deck");
+        testDeck = new Deck("test deck");
         testDeck.addCard("aye", "lol", "");
         testDeck.addCard("what card?", "this card!", "");
         testDeck.addCard("what team?", "wildcats!", "get ya head in the game");
@@ -63,27 +65,46 @@ public class MainActivity extends AppCompatActivity {
                 toast.show();
             }
         });
+    }
 
-        // Alarm stuff
+    /**
+     * Action performed by pressing the notification settings button. Sets hourly notifications. If
+     * notifications are already set, this button will remove them.
+     */
+    //TODO: If alarm is set, make it reset when device is rebooted.
+    public void onClickNotificationSettings(View view) {
+        // Ensure alarm manager was accessed properly.
+        if (alarmManager == null) {
+            Toast.makeText(this, "There was a problem setting notifications",
+                    Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        // Check if alarm has already been scheduled, and remove it if it has.
+        if (alarmManager.getNextAlarmClock() != null) {
+            alarmManager.cancel(pendingAlarmIntent);
+            Toast.makeText(
+                    this, "Hourly notifications removed", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        // Set alarm.
         Intent alarmIntent = new Intent(this, NotificationAlarmReceiver.class);
         byte[] deckBytes = ParcelableUtil.marshall(testDeck);
         alarmIntent.putExtra("deck_bytes", deckBytes);
-        PendingIntent pendingAlarmIntent =
-                PendingIntent.getBroadcast(
-                        this, 0, alarmIntent, PendingIntent.FLAG_UPDATE_CURRENT);
+        pendingAlarmIntent = PendingIntent.getBroadcast(
+                this, 0, alarmIntent, PendingIntent.FLAG_UPDATE_CURRENT);
 
-        AlarmManager manager = (AlarmManager) getSystemService(Context.ALARM_SERVICE);
-
+        // Make time of alarm the start of the next hour.
         Calendar calendar = Calendar.getInstance();
-        calendar.setTimeInMillis(System.currentTimeMillis());
-        calendar.set(Calendar.HOUR_OF_DAY, 2);
-        calendar.set(Calendar.MINUTE, 12);
-        calendar.set(Calendar.SECOND, 1);
+        calendar.set(Calendar.MINUTE, 0);
+        calendar.set(Calendar.SECOND, 0);
+        calendar.add(Calendar.HOUR_OF_DAY, 1);
 
-        manager.set(AlarmManager.RTC_WAKEUP, calendar.getTimeInMillis(), pendingAlarmIntent);
-    }
-
-    public void onClickNotificationSettings(View view) {
+        // Set alarm to repeat every hour.
+        alarmManager.setRepeating(AlarmManager.RTC_WAKEUP, calendar.getTimeInMillis(),
+                AlarmManager.INTERVAL_HOUR, pendingAlarmIntent);
+        Toast.makeText(this, "Hourly notifications set", Toast.LENGTH_SHORT).show();
 
     }
 
@@ -94,10 +115,18 @@ public class MainActivity extends AppCompatActivity {
         startActivity(intent);
     }
 
+    /**
+     * Helper method for generating decks and flashcards I want to study because I am too lazy to
+     * code manual addition.
+      */
+    private void generateFlashcards() {
+
+    }
+
     public static class ParcelableUtil {
-        public static byte[] marshall(Parcelable parceable) {
+        public static byte[] marshall(Parcelable parcelable) {
             Parcel parcel = Parcel.obtain();
-            parceable.writeToParcel(parcel, 0);
+            parcelable.writeToParcel(parcel, 0);
             byte[] bytes = parcel.marshall();
             parcel.recycle();
             return bytes;

@@ -28,7 +28,7 @@ public class NotificationAlarmReceiver extends BroadcastReceiver {
         Card card = deck.getCards().get(cardIndex);
 
         // Notification stuff
-        Intent notifIntent = new Intent(context, NotificationQuestionActivity.class);
+        Intent notifIntent = new Intent(context, ViewDeckActivity.class);
         notifIntent.setFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP | Intent.FLAG_ACTIVITY_CLEAR_TOP);
         notifIntent.putExtra("deck", deck);
         notifIntent.putExtra("card_index", cardIndex);
@@ -41,6 +41,7 @@ public class NotificationAlarmReceiver extends BroadcastReceiver {
                         .setContentTitle("Flashcards")
                         .setContentText("What is " + card.getFront() + "?")
                         .setPriority(NotificationCompat.PRIORITY_DEFAULT)
+                        .setVibrate(new long[] { 500, 500, 500, 500, 500 })
                         .setContentIntent(pendingIntent)
                         .setAutoCancel(true);
 
