@@ -40,6 +40,32 @@ public class Deck implements Parcelable {
         cards.add(new Card(front, back, explanation));
     }
 
+    @Override
+    public boolean equals(Object object) {
+        if (object == null) {
+            return false;
+        }
+        if (this == object) {
+            return true;
+        }
+        if (getClass() != object.getClass()) {
+            return false;
+        }
+        Deck other = (Deck) object;
+        if (!name.equals(other.getName())) {
+            return false;
+        }
+        if (cards.size() != other.size()) {
+            return false;
+        }
+        for (int i = 0; i < cards.size(); i++) {
+            if (!cards.get(i).equals(other.getCards().get(i))) {
+                return false;
+            }
+        }
+        return true;
+    }
+
     /* Parcelable Things */
 
     // Required for parcelable, but is ignored.

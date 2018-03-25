@@ -48,6 +48,28 @@ public class Card implements Parcelable {
         return !explanation.isEmpty();
     }
 
+    @Override
+    public boolean equals(Object object) {
+        if (object == null) {
+            return true;
+        }
+        if (this == object) {
+            return true;
+        }
+        if (getClass() != object.getClass()) {
+            return false;
+        }
+        Card other = (Card) object;
+        if (!front.equals(other.getFront())) {
+            return false;
+        }
+        if (!back.equals(other.getBack())) {
+            return false;
+        }
+        return explanation.equals(other.getExplanation()) ||
+                (!hasExplanation() && !other.hasExplanation());
+    }
+
     /* Parcelable Things */
 
     // Required for parcelable, but is ignored.

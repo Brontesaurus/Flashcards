@@ -15,7 +15,7 @@ import android.widget.Toast;
 public class ViewDeckActivity extends AppCompatActivity {
     private Deck deck;
     private Card currentCard; // Current card being displayed to the user.
-    private int cardIndex; // The index of the current card being displayed to the user.
+    private int cardIndex = 0; // The index of the current card being displayed to the user.
     // Whether the flashcard is showing the front or back.
     private boolean cardDirection = CARD_FRONT;
     // Whether the explanation for the current card is currently being displayed to the user.
@@ -30,6 +30,7 @@ public class ViewDeckActivity extends AppCompatActivity {
     private static final String BLACK_COLOUR = "#000000";
     private static final boolean CARD_FRONT = true;
     private static final boolean CARD_BACK = false;
+    private static final String TAG = "FLASHCARDS";
 
     private static final String NO_EXPL_MSG = "This card has no explanation!";
     private static final String SHOW_EXPL = "Show Explanation";
@@ -46,23 +47,51 @@ public class ViewDeckActivity extends AppCompatActivity {
         explanation = findViewById(R.id.expl_text);
 
         // Get deck contents from intent.
-        Intent intent = getIntent();
-        deck = intent.getParcelableExtra("deck");
-        // Card index is only sent when activity is starting from a notification. When the activity
-        // is starting from selecting the deck within the app, this value is not sent, and will
-        // default to 0.
-        cardIndex = intent.getIntExtra("card_index", 0);
+        deck = getIntent().getParcelableExtra("deck");
 
         // Put deck contents in card.
         flashcard = findViewById(R.id.card_text);
         currentCard = deck.getCards().get(cardIndex); // Get current card in deck.
         flashcard.setText(currentCard.getFront());
+        disableButton(prevButton);
+    }
 
-        // Disable a button if at start or end.
+    /**
+     * Processes the new intent when opening the activity from a notification. Changes the card
+     * display to the card from the notification.
+     * @param intent the intent sent from the notification.
+     */
+    @Override
+    public void onNewIntent(Intent intent) {
+        super.onNewIntent(intent);
+
+        Deck newDeck = intent.getParcelableExtra("deck");
+        int newCardIndex = intent.getIntExtra("card_index", 0);
+
+        // If new deck, reinitialise deck.
+        boolean sameDeck = deck.equals(newDeck);
+        if (!sameDeck) {
+            deck = newDeck;
+        }
+
+        // If new card, set to new card. If the deck has changed, there will always be a new card.
+        if (cardIndex != newCardIndex || !sameDeck) {
+            cardIndex = newCardIndex;
+        }
+        // Call this even if the card is the same as before, to reset the view to the front of the
+        // card.
+        setCardContents();
+
+        // Reset previous and next buttons.
         if (cardIndex == 0) {
             disableButton(prevButton);
+            enableButton(nextButton);
         } else if (cardIndex == deck.size() - 1) {
             disableButton(nextButton);
+            enableButton(prevButton);
+        } else {
+            enableButton(prevButton);
+            enableButton(nextButton);
         }
     }
 
@@ -107,7 +136,7 @@ public class ViewDeckActivity extends AppCompatActivity {
                 enableButton(prevButton);
             }
         }
-        // Disable prev button if beginning of deck is reached.
+        // Disable next button if end of deck is reached.
         if (cardIndex == deck.size() - 1) {
             disableButton(nextButton);
         }

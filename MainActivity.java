@@ -35,6 +35,13 @@ public class MainActivity extends AppCompatActivity {
         testDeck.addCard("what team?", "wildcats!", "get ya head in the game");
         decks.add(testDeck);
 
+        Deck anotherDeck = new Deck("another deck");
+        anotherDeck.addCard("hello", "goodbye", "");
+        anotherDeck.addCard("aaa", "bbb", "");
+        anotherDeck.addCard("i am typing", "many things", "");
+        anotherDeck.addCard("aaaaaaaaaaaa", "bbbbbbbbbbb", "");
+        decks.add(anotherDeck);
+
         LinearLayout mainLayout = findViewById(R.id.main_layout);
 
         // Loop through decks and create buttons for them, so they can be opened and viewed.
@@ -108,9 +115,29 @@ public class MainActivity extends AppCompatActivity {
 
     }
 
+    // Helper method to trigger a notification, used for debugging. Sets a non-repeating alarm for
+    // the current time in order to keep the same functionality as a naturally occurring
+    // notification.
+    public void onClickTriggerNotification(View view) {
+        // Set alarm.
+        Intent alarmIntent = new Intent(this, NotificationAlarmReceiver.class);
+        byte[] deckBytes = ParcelableUtil.marshall(testDeck);
+        alarmIntent.putExtra("deck_bytes", deckBytes);
+        pendingAlarmIntent = PendingIntent.getBroadcast(
+                this, 0, alarmIntent, PendingIntent.FLAG_UPDATE_CURRENT);
+
+        // Make time of alarm now.
+        Calendar calendar = Calendar.getInstance();
+
+        // Set alarm.
+        alarmManager.set(AlarmManager.RTC_WAKEUP, calendar.getTimeInMillis(), pendingAlarmIntent);
+        Toast.makeText(this, "Single notification set", Toast.LENGTH_SHORT).show();
+    }
+
     // Open a deck and view it. Starts a new deck viewing activity.
     private void openDeck(Deck deck) {
         Intent intent = new Intent(this, ViewDeckActivity.class);
+        intent.setFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP | Intent.FLAG_ACTIVITY_CLEAR_TOP);
         intent.putExtra("deck", deck);
         startActivity(intent);
     }
