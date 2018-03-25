@@ -15,10 +15,10 @@ import android.widget.Toast;
 
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.Random;
 
 public class MainActivity extends AppCompatActivity {
     private ArrayList<Deck> decks;
-    private Deck testDeck;
     private AlarmManager alarmManager;
     private PendingIntent pendingAlarmIntent;
 
@@ -29,40 +29,26 @@ public class MainActivity extends AppCompatActivity {
         decks = new ArrayList<>();
         alarmManager = (AlarmManager) getSystemService(Context.ALARM_SERVICE);
 
-        testDeck = new Deck("test deck");
-        testDeck.addCard("aye", "lol", "");
-        testDeck.addCard("what card?", "this card!", "");
-        testDeck.addCard("what team?", "wildcats!", "get ya head in the game");
-        decks.add(testDeck);
-
-        Deck anotherDeck = new Deck("another deck");
-        anotherDeck.addCard("hello", "goodbye", "");
-        anotherDeck.addCard("aaa", "bbb", "");
-        anotherDeck.addCard("i am typing", "many things", "");
-        anotherDeck.addCard("aaaaaaaaaaaa", "bbbbbbbbbbb", "");
-        decks.add(anotherDeck);
+        generateFlashcards();
 
         LinearLayout mainLayout = findViewById(R.id.main_layout);
 
         // Loop through decks and create buttons for them, so they can be opened and viewed.
         for (final Deck deck : decks) {
             String text = "Adding deck called " + deck.getName();
-            Toast toast = Toast.makeText(getApplicationContext(), text, Toast.LENGTH_SHORT);
-            toast.show();
+            Toast.makeText(getApplicationContext(), text, Toast.LENGTH_SHORT).show();
             final Button button = new Button(this);
             button.setText(deck.getName());
             button.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
-                    button.setEnabled(false);
                     openDeck(deck);
-                    button.setEnabled(true);
                 }
             });
             mainLayout.addView(button);
         }
 
-        // Make the new deck button do something.
+        //TODO: Make the new deck button do something.
         Button newDeckButton = findViewById(R.id.new_deck_button);
         newDeckButton.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -79,6 +65,7 @@ public class MainActivity extends AppCompatActivity {
      * notifications are already set, this button will remove them.
      */
     //TODO: If alarm is set, make it reset when device is rebooted.
+    //TODO: Figure out why turning notifications off does not work.
     public void onClickNotificationSettings(View view) {
         // Ensure alarm manager was accessed properly.
         if (alarmManager == null) {
@@ -97,7 +84,8 @@ public class MainActivity extends AppCompatActivity {
 
         // Set alarm.
         Intent alarmIntent = new Intent(this, NotificationAlarmReceiver.class);
-        byte[] deckBytes = ParcelableUtil.marshall(testDeck);
+        int deckIndex = new Random().nextInt(decks.size()); // Pick random deck to ask from.
+        byte[] deckBytes = ParcelableUtil.marshall(decks.get(deckIndex));
         alarmIntent.putExtra("deck_bytes", deckBytes);
         pendingAlarmIntent = PendingIntent.getBroadcast(
                 this, 0, alarmIntent, PendingIntent.FLAG_UPDATE_CURRENT);
@@ -121,7 +109,8 @@ public class MainActivity extends AppCompatActivity {
     public void onClickTriggerNotification(View view) {
         // Set alarm.
         Intent alarmIntent = new Intent(this, NotificationAlarmReceiver.class);
-        byte[] deckBytes = ParcelableUtil.marshall(testDeck);
+        int deckIndex = new Random().nextInt(decks.size()); // Pick random deck to ask from.
+        byte[] deckBytes = ParcelableUtil.marshall(decks.get(deckIndex));
         alarmIntent.putExtra("deck_bytes", deckBytes);
         pendingAlarmIntent = PendingIntent.getBroadcast(
                 this, 0, alarmIntent, PendingIntent.FLAG_UPDATE_CURRENT);
@@ -147,7 +136,33 @@ public class MainActivity extends AppCompatActivity {
      * code manual addition.
       */
     private void generateFlashcards() {
+        Deck places = new Deck("places 1");
+        places.addCard("대학교", "university", "");
+        places.addCard("교실", "classroom", "");
+        places.addCard("강의실", "lecture theatre", "");
+        places.addCard("도서관", "library", "");
+        places.addCard("은행", "bank", "");
+        places.addCard("서점", "book shop", "");
+        places.addCard("학생 식당", "canteen", "");
+        places.addCard("우체국", "post office", "");
+        places.addCard("집", "home/house", "");
+        places.addCard("시내", "downtown", "");
+        decks.add(places);
 
+        Deck morePlaces = new Deck("places 2");
+        morePlaces.addCard("공원", "park", "");
+        morePlaces.addCard("시장", "market", "");
+        morePlaces.addCard("극장", "cinema", "");
+        morePlaces.addCard("역", "station", "");
+        morePlaces.addCard("공항", "airport", "");
+        morePlaces.addCard("병원", "hospital", "");
+        morePlaces.addCard("음식점", "restaurant", "");
+        morePlaces.addCard("식당", "restaurant", "");
+        morePlaces.addCard("백화점", "department store", "");
+        morePlaces.addCard("편의점", "convenience store", "");
+        morePlaces.addCard("가게", "corner shop", "");
+        morePlaces.addCard("노래방", "singing room", "");
+        decks.add(morePlaces);
     }
 
     public static class ParcelableUtil {
