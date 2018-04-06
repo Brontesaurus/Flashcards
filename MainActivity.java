@@ -1,9 +1,12 @@
 package bronte.flashcards;
 
 import android.app.AlarmManager;
+import android.app.NotificationChannel;
+import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
+import android.os.Build;
 import android.os.Parcel;
 import android.os.Parcelable;
 import android.support.v7.app.AppCompatActivity;
@@ -21,6 +24,10 @@ public class MainActivity extends AppCompatActivity {
     private ArrayList<Deck> decks;
     private AlarmManager alarmManager;
     private PendingIntent pendingAlarmIntent;
+
+    // Channel stuff for Android 8.0 notifications.
+    static final String CHANNEL_ID = "flashcard";
+    private static final String CHANNEL_NAME = "flashcard_question_channel";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -58,6 +65,17 @@ public class MainActivity extends AppCompatActivity {
                 toast.show();
             }
         });
+
+        // Notification channel stuff for Android 8.0 onwards.
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            NotificationChannel channel = new NotificationChannel(
+                    CHANNEL_ID, CHANNEL_NAME, NotificationManager.IMPORTANCE_DEFAULT);
+            NotificationManager notificationManager =
+                    (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
+            if (notificationManager != null) {
+                notificationManager.createNotificationChannel(channel);
+            }
+        }
     }
 
     /**

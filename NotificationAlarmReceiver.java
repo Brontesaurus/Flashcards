@@ -37,7 +37,7 @@ public class NotificationAlarmReceiver extends BroadcastReceiver {
                 context, requestCode, notifIntent, PendingIntent.FLAG_UPDATE_CURRENT);
 
         NotificationCompat.Builder notifBuilder =
-                new NotificationCompat.Builder(context, "")
+                new NotificationCompat.Builder(context, MainActivity.CHANNEL_ID)
                         .setSmallIcon(R.drawable.heart)
                         .setContentTitle("Flashcards")
                         .setContentText("What is " + card.getFront() + "?")
