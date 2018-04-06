@@ -32,8 +32,9 @@ public class NotificationAlarmReceiver extends BroadcastReceiver {
         notifIntent.setFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP | Intent.FLAG_ACTIVITY_CLEAR_TOP);
         notifIntent.putExtra("deck", deck);
         notifIntent.putExtra("card_index", cardIndex);
+        int requestCode = new Random().nextInt();
         PendingIntent pendingIntent = PendingIntent.getActivity(
-                context, 0, notifIntent, PendingIntent.FLAG_UPDATE_CURRENT);
+                context, requestCode, notifIntent, PendingIntent.FLAG_UPDATE_CURRENT);
 
         NotificationCompat.Builder notifBuilder =
                 new NotificationCompat.Builder(context, "")

@@ -163,6 +163,31 @@ public class MainActivity extends AppCompatActivity {
         morePlaces.addCard("가게", "corner shop", "");
         morePlaces.addCard("노래방", "singing room", "");
         decks.add(morePlaces);
+
+        Deck verbs = new Deck("verbs 1");
+        verbs.addCard("해요", "to do", "");
+        verbs.addCard("공부해요", "to study", "");
+        verbs.addCard("숙제해요", "to do homework", "");
+        verbs.addCard("전화해요", "to telephone", "");
+        verbs.addCard("운동해요", "to exercise", "");
+        verbs.addCard("이야기해요", "to talk/chat", "");
+        verbs.addCard("식사해요", "to have a meal", "");
+        verbs.addCard("일해요", "to work", "");
+        decks.add(verbs);
+
+        Deck moreVerbs = new Deck("verbs 2");
+        moreVerbs.addCard("놀아요", "to play", "");
+        moreVerbs.addCard("가요", "to go", "");
+        moreVerbs.addCard("만나요", "to meet", "");
+        moreVerbs.addCard("잠자요", "to sleep", "");
+        moreVerbs.addCard("와요", "to come", "");
+        moreVerbs.addCard("봐요", "to see", "");
+        moreVerbs.addCard("시험봐요", "to take an exam", "");
+        moreVerbs.addCard("먹어요", "to eat", "");
+        moreVerbs.addCard("읽어요", "to read", "");
+        moreVerbs.addCard("마셔요", "to drink", "");
+        moreVerbs.addCard("써요", "to write", "");
+        decks.add(moreVerbs);
     }
 
     public static class ParcelableUtil {
@@ -177,7 +202,7 @@ public class MainActivity extends AppCompatActivity {
         public static Parcel unmarshall(byte[] bytes) {
             Parcel parcel = Parcel.obtain();
             parcel.unmarshall(bytes, 0, bytes.length);
-            parcel.setDataPosition(0); // This is extremely important!
+            parcel.setDataPosition(0);
             return parcel;
         }
     }

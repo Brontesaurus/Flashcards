@@ -51,7 +51,7 @@ public class Card implements Parcelable {
     @Override
     public boolean equals(Object object) {
         if (object == null) {
-            return true;
+            return false;
         }
         if (this == object) {
             return true;
