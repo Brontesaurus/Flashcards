@@ -4,8 +4,10 @@ import android.app.AlarmManager;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
+import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.os.Build;
 import android.os.Parcel;
 import android.os.Parcelable;
@@ -23,11 +25,19 @@ import java.util.Random;
 public class MainActivity extends AppCompatActivity {
     private ArrayList<Deck> decks;
     private AlarmManager alarmManager;
-    private PendingIntent pendingAlarmIntent;
+    private PendingIntent alarmPendingIntent;
+
+    private ComponentName bootReceiver;
+    private PackageManager packageManager;
 
     // Channel stuff for Android 8.0 notifications.
     static final String CHANNEL_ID = "flashcard";
     private static final String CHANNEL_NAME = "flashcard_question_channel";
+    private static final int HOURLY_ALARM_REQUEST_CODE = 1001;
+
+    static final String BOOT_COMPLETED = "android.intent.action.BOOT_COMPLETED";
+
+    boolean isAlarmSet = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -35,6 +45,8 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
         decks = new ArrayList<>();
         alarmManager = (AlarmManager) getSystemService(Context.ALARM_SERVICE);
+        bootReceiver = new ComponentName(this, bronte.flashcards.bootReceiver.class);
+        packageManager = this.getPackageManager();
 
         generateFlashcards();
 
@@ -42,8 +54,6 @@ public class MainActivity extends AppCompatActivity {
 
         // Loop through decks and create buttons for them, so they can be opened and viewed.
         for (final Deck deck : decks) {
-            String text = "Adding deck called " + deck.getName();
-            Toast.makeText(getApplicationContext(), text, Toast.LENGTH_SHORT).show();
             final Button button = new Button(this);
             button.setText(deck.getName());
             button.setOnClickListener(new View.OnClickListener() {
@@ -82,42 +92,22 @@ public class MainActivity extends AppCompatActivity {
      * Action performed by pressing the notification settings button. Sets hourly notifications. If
      * notifications are already set, this button will remove them.
      */
-    //TODO: If alarm is set, make it reset when device is rebooted.
-    //TODO: Figure out why turning notifications off does not work.
     public void onClickNotificationSettings(View view) {
-        // Ensure alarm manager was accessed properly.
-        if (alarmManager == null) {
-            Toast.makeText(this, "There was a problem setting notifications",
-                    Toast.LENGTH_SHORT).show();
-            return;
-        }
-
         // Check if alarm has already been scheduled, and remove it if it has.
-        if (alarmManager.getNextAlarmClock() != null) {
-            alarmManager.cancel(pendingAlarmIntent);
+        if (alarmManager != null && isAlarmSet) {
+            alarmManager.cancel(alarmPendingIntent);
+            isAlarmSet = false;
             Toast.makeText(
                     this, "Hourly notifications removed", Toast.LENGTH_SHORT).show();
+
+            // Disable alarms to be reset on reboot.
+            packageManager.setComponentEnabledSetting(bootReceiver,
+                    PackageManager.COMPONENT_ENABLED_STATE_DISABLED, PackageManager.DONT_KILL_APP);
+
             return;
         }
 
-        // Set alarm.
-        Intent alarmIntent = new Intent(this, NotificationAlarmReceiver.class);
-        int deckIndex = new Random().nextInt(decks.size()); // Pick random deck to ask from.
-        byte[] deckBytes = ParcelableUtil.marshall(decks.get(deckIndex));
-        alarmIntent.putExtra("deck_bytes", deckBytes);
-        pendingAlarmIntent = PendingIntent.getBroadcast(
-                this, 0, alarmIntent, PendingIntent.FLAG_UPDATE_CURRENT);
-
-        // Make time of alarm the start of the next hour.
-        Calendar calendar = Calendar.getInstance();
-        calendar.set(Calendar.MINUTE, 0);
-        calendar.set(Calendar.SECOND, 0);
-        calendar.add(Calendar.HOUR_OF_DAY, 1);
-
-        // Set alarm to repeat every hour.
-        alarmManager.setRepeating(AlarmManager.RTC_WAKEUP, calendar.getTimeInMillis(),
-                AlarmManager.INTERVAL_HOUR, pendingAlarmIntent);
-        Toast.makeText(this, "Hourly notifications set", Toast.LENGTH_SHORT).show();
+        setNotification(true);
 
     }
 
@@ -125,20 +115,48 @@ public class MainActivity extends AppCompatActivity {
     // the current time in order to keep the same functionality as a naturally occurring
     // notification.
     public void onClickTriggerNotification(View view) {
-        // Set alarm.
+        setNotification(false);
+    }
+
+    void setNotification(boolean isRepeating) {
         Intent alarmIntent = new Intent(this, NotificationAlarmReceiver.class);
         int deckIndex = new Random().nextInt(decks.size()); // Pick random deck to ask from.
         byte[] deckBytes = ParcelableUtil.marshall(decks.get(deckIndex));
+
+        int requestCode;
+        if (isRepeating) {
+            requestCode = HOURLY_ALARM_REQUEST_CODE;
+        } else {
+            // If single notification, generate a random request code so this notification does not
+            // interfere with any others.
+            requestCode = new Random().nextInt();
+        }
+
         alarmIntent.putExtra("deck_bytes", deckBytes);
-        pendingAlarmIntent = PendingIntent.getBroadcast(
-                this, 0, alarmIntent, PendingIntent.FLAG_UPDATE_CURRENT);
+        alarmPendingIntent = PendingIntent.getBroadcast(
+                this, requestCode, alarmIntent, PendingIntent.FLAG_UPDATE_CURRENT);
 
-        // Make time of alarm now.
         Calendar calendar = Calendar.getInstance();
+        if (isRepeating) {
+            // Make time of the first alarm the start of the next hour.
+            calendar.set(Calendar.MINUTE, 0);
+            calendar.set(Calendar.SECOND, 0);
+            calendar.add(Calendar.HOUR_OF_DAY, 1);
 
-        // Set alarm.
-        alarmManager.set(AlarmManager.RTC_WAKEUP, calendar.getTimeInMillis(), pendingAlarmIntent);
-        Toast.makeText(this, "Single notification set", Toast.LENGTH_SHORT).show();
+            // Set alarm to repeat every hour.
+            alarmManager.setInexactRepeating(AlarmManager.RTC, calendar.getTimeInMillis(),
+                    AlarmManager.INTERVAL_HOUR, alarmPendingIntent);
+            Toast.makeText(this, "Hourly notifications set", Toast.LENGTH_SHORT).show();
+            isAlarmSet = true;
+
+            // Enable the alarm to be reset on reboot.
+            packageManager.setComponentEnabledSetting(bootReceiver,
+                    PackageManager.COMPONENT_ENABLED_STATE_ENABLED, PackageManager.DONT_KILL_APP);
+        } else {
+            // Set single alarm.
+            alarmManager.set(AlarmManager.RTC, calendar.getTimeInMillis(), alarmPendingIntent);
+            Toast.makeText(this, "Single notification set", Toast.LENGTH_SHORT).show();
+        }
     }
 
     // Open a deck and view it. Starts a new deck viewing activity.
@@ -206,6 +224,29 @@ public class MainActivity extends AppCompatActivity {
         moreVerbs.addCard("마셔요", "to drink", "");
         moreVerbs.addCard("써요", "to write", "");
         decks.add(moreVerbs);
+
+        Deck drinks = new Deck("drinks 1");
+        drinks.addCard("물", "water", "");
+        drinks.addCard("차", "tea", "");
+        drinks.addCard("홍차", "black tea", "");
+        drinks.addCard("녹차", "green tea", "");
+        drinks.addCard("인삼차", "insam tea", "");
+        drinks.addCard("커피", "coffee", "");
+        drinks.addCard("콜라", "cola", "");
+        drinks.addCard("레모네이드", "lemonade", "");
+        drinks.addCard("주스", "juice", "");
+        decks.add(drinks);
+
+        Deck moreDrinks = new Deck("drinks 2");
+        moreDrinks.addCard("우유", "milk", "");
+        moreDrinks.addCard("식혜", "rice nectar", "");
+        moreDrinks.addCard("수정과", "cinnamon punch", "");
+        moreDrinks.addCard("음료수", "soft drink", "");
+        moreDrinks.addCard("술", "alcohol", "");
+        moreDrinks.addCard("맥주", "beer", "");
+        moreDrinks.addCard("포도주", "wine", "");
+        moreDrinks.addCard("소주", "soju", "");
+        decks.add(moreDrinks);
     }
 
     public static class ParcelableUtil {

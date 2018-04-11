@@ -71,7 +71,7 @@ public class ViewDeckActivity extends AppCompatActivity {
     @Override
     public void onNewIntent(Intent intent) {
         super.onNewIntent(intent);
-        
+
         Deck newDeck = intent.getParcelableExtra("deck");
         int newCardIndex = intent.getIntExtra("card_index", 0);
 
