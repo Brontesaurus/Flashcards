@@ -1,6 +1,8 @@
 package bronte.flashcards;
 
+import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.graphics.Color;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
@@ -55,6 +57,7 @@ public class ViewDeckActivity extends AppCompatActivity {
         Intent intent = getIntent();
         deck = intent.getParcelableExtra("deck");
         cardIndex = intent.getIntExtra("card_index", 0);
+        boolean fromNotif = intent.getBooleanExtra("from_notif", false);
 
         // Put deck contents in card.
         flashcard = findViewById(R.id.card_text);
@@ -67,6 +70,10 @@ public class ViewDeckActivity extends AppCompatActivity {
             disableButton(prevButton);
         } else if (cardIndex == deck.size() - 1) {
             disableButton(nextButton);
+        }
+
+        if (fromNotif) {
+            resetIgnoredNotifications();
         }
     }
 
@@ -108,6 +115,8 @@ public class ViewDeckActivity extends AppCompatActivity {
             enableButton(prevButton);
             enableButton(nextButton);
         }
+
+        resetIgnoredNotifications();
     }
 
     public void onClickFlashcard(View view) {
@@ -225,6 +234,19 @@ public class ViewDeckActivity extends AppCompatActivity {
             knownWordButton.setText(YES_KNOWN);
         } else {
             knownWordButton.setText(NOT_KNOWN);
+        }
+    }
+
+    // After a notification has been opened, reset the number of ignored notifications in shared
+    // preferences.
+    private void resetIgnoredNotifications() {
+        SharedPreferences sharedPreferences = getSharedPreferences(
+                MainActivity.NOTIFICATION_PREFERENCES, Context.MODE_PRIVATE);
+        int numIgnored = sharedPreferences.getInt(MainActivity.PREF_NUM_IGNORED_NOTIFS, -1);
+        if (numIgnored > 0) {
+            SharedPreferences.Editor editor = sharedPreferences.edit();
+            editor.putInt(MainActivity.PREF_NUM_IGNORED_NOTIFS, 0);
+            editor.apply();
         }
     }
 }

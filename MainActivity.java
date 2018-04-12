@@ -1,5 +1,6 @@
 package bronte.flashcards;
 
+import android.Manifest;
 import android.app.AlarmManager;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
@@ -7,10 +8,13 @@ import android.app.PendingIntent;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.os.Build;
 import android.os.Parcel;
 import android.os.Parcelable;
+import android.support.v4.app.ActivityCompat;
+import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.view.View;
@@ -26,18 +30,25 @@ public class MainActivity extends AppCompatActivity {
     private ArrayList<Deck> decks;
     private AlarmManager alarmManager;
     private PendingIntent alarmPendingIntent;
+    private SharedPreferences sharedPreferences;
 
     private ComponentName bootReceiver;
     private PackageManager packageManager;
+
+    boolean isAlarmSet = false;
 
     // Channel stuff for Android 8.0 notifications.
     static final String CHANNEL_ID = "flashcard";
     private static final String CHANNEL_NAME = "flashcard_question_channel";
     private static final int HOURLY_ALARM_REQUEST_CODE = 1001;
-
     static final String BOOT_COMPLETED = "android.intent.action.BOOT_COMPLETED";
 
-    boolean isAlarmSet = false;
+    // Values for shared preferences.
+    static final String NOTIFICATION_PREFERENCES = "notification_preferences";
+    static final String PREF_NUM_IGNORED_NOTIFS = "ignored_notifs";
+    // Number of notifications that can be ignored before a friend will be texted. Negative number
+    // denotes friend texting has not been set.
+    static final String PREF_IGNORED_NOTIFS_THRESHOLD = "notifs_threshold";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -47,6 +58,21 @@ public class MainActivity extends AppCompatActivity {
         alarmManager = (AlarmManager) getSystemService(Context.ALARM_SERVICE);
         bootReceiver = new ComponentName(this, BootReceiver.class);
         packageManager = this.getPackageManager();
+
+        // Retrieve data from shared preferences, and set if necessary.
+        sharedPreferences = getSharedPreferences(NOTIFICATION_PREFERENCES, Context.MODE_PRIVATE);
+        int numIgnored = sharedPreferences.getInt(PREF_NUM_IGNORED_NOTIFS, -1);
+        if (numIgnored < 0) {
+            SharedPreferences.Editor editor = sharedPreferences.edit();
+            editor.putInt(PREF_NUM_IGNORED_NOTIFS, 0);
+            editor.apply();
+        }
+        int ignoreThreshold = sharedPreferences.getInt(PREF_IGNORED_NOTIFS_THRESHOLD, -1);
+        if (ignoreThreshold < 0) {
+            SharedPreferences.Editor editor = sharedPreferences.edit();
+            editor.putInt(PREF_IGNORED_NOTIFS_THRESHOLD, 3);
+            editor.apply();
+        }
 
         generateFlashcards();
 
@@ -119,6 +145,14 @@ public class MainActivity extends AppCompatActivity {
     }
 
     void setNotification(boolean isRepeating) {
+
+        // Request permission to send a text to someone if permission has not already been granted.
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.SEND_SMS)
+                != PackageManager.PERMISSION_GRANTED) {
+            ActivityCompat.requestPermissions(this,
+                    new String[]{Manifest.permission.SEND_SMS},0);
+        }
+
         Intent alarmIntent = new Intent(this, NotificationAlarmReceiver.class);
         int deckIndex = new Random().nextInt(decks.size()); // Pick random deck to ask from.
         byte[] deckBytes = ParcelableUtil.marshall(decks.get(deckIndex));

@@ -1,12 +1,18 @@
 package bronte.flashcards;
 
+import android.Manifest;
 import android.app.PendingIntent;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
+import android.content.pm.PackageManager;
 import android.os.Parcel;
 import android.support.v4.app.NotificationCompat;
 import android.support.v4.app.NotificationManagerCompat;
+import android.support.v4.content.ContextCompat;
+import android.telephony.SmsManager;
+import android.widget.Toast;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -18,10 +24,13 @@ import java.util.UUID;
  * Sends a notification asking about a card.
  */
 public class NotificationAlarmReceiver extends BroadcastReceiver {
+
+    private static final String TEXT_MESSAGE = "I'm not studying! Go annoy me!";
+
     @Override
     public void onReceive(Context context, Intent alarmIntent) {
 
-        // Find card to ask.
+        // Get deck.
         byte[] deckBytes = alarmIntent.getByteArrayExtra("deck_bytes");
         Parcel deckParcel = MainActivity.ParcelableUtil.unmarshall(deckBytes);
         Deck deck = new Deck(deckParcel);
@@ -54,11 +63,40 @@ public class NotificationAlarmReceiver extends BroadcastReceiver {
             return;
         }
 
-        // Notification stuff
+        // Increment number of ignored notifications in shared preferences.
+        SharedPreferences sharedPreferences = context.getSharedPreferences(
+                MainActivity.NOTIFICATION_PREFERENCES, Context.MODE_PRIVATE);
+        int numIgnored = sharedPreferences.getInt(MainActivity.PREF_NUM_IGNORED_NOTIFS, -1);
+        int ignoreThreshold = sharedPreferences.getInt(
+                MainActivity.PREF_IGNORED_NOTIFS_THRESHOLD, -1);
+        if (numIgnored >= 0) {
+            numIgnored++;
+            SharedPreferences.Editor editor = sharedPreferences.edit();
+            editor.putInt(MainActivity.PREF_NUM_IGNORED_NOTIFS, numIgnored);
+            editor.apply();
+        }
+
+        // Friend texting stuff.
+        //TODO: Add warning for when 1 below threshold.
+        if (numIgnored >= 0 && ignoreThreshold >= 0) {
+            if (numIgnored >= ignoreThreshold) {
+                //TODO: Handle not having permission.
+                if (ContextCompat.checkSelfPermission(context, Manifest.permission.SEND_SMS)
+                        == PackageManager.PERMISSION_GRANTED) {
+                    SmsManager sms = SmsManager.getDefault();
+                    sms.sendTextMessage("0448827738", null, TEXT_MESSAGE, null, null);
+                }
+
+            }
+        }
+        Toast.makeText(context, "up to " + numIgnored, Toast.LENGTH_SHORT).show();
+
+        // Notification stuff.
         Intent notifIntent = new Intent(context, ViewDeckActivity.class);
         notifIntent.setFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP | Intent.FLAG_ACTIVITY_CLEAR_TOP);
         notifIntent.putExtra("deck", deck);
         notifIntent.putExtra("card_index", cardIndex);
+        notifIntent.putExtra("from_notif", true);
         int requestCode = new Random().nextInt();
         PendingIntent pendingIntent = PendingIntent.getActivity(
                 context, requestCode, notifIntent, PendingIntent.FLAG_UPDATE_CURRENT);
@@ -73,6 +111,7 @@ public class NotificationAlarmReceiver extends BroadcastReceiver {
                         .setContentIntent(pendingIntent)
                         .setAutoCancel(true);
 
+        // Send notification.
         int notifID = UUID.randomUUID().hashCode();
         NotificationManagerCompat notificationManager = NotificationManagerCompat.from(context);
         notificationManager.notify(notifID, notifBuilder.build());
