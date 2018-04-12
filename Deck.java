@@ -5,6 +5,7 @@ import android.os.Parcelable;
 
 import java.util.ArrayList;
 
+//TODO: Implement warning for when all cards become known.
 public class Deck implements Parcelable {
     private String name;
     private ArrayList<Card> cards;

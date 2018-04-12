@@ -7,6 +7,7 @@ public class Card implements Parcelable {
     private String front;
     private String back;
     private String explanation;
+    private boolean knownWord;
 
     public Card(String front, String back, String explanation){
         this.front = front;
@@ -18,6 +19,7 @@ public class Card implements Parcelable {
         front = parcel.readString();
         back = parcel.readString();
         explanation = parcel.readString();
+        knownWord = false;
     }
 
     public void setFront(String front) {
@@ -30,6 +32,10 @@ public class Card implements Parcelable {
 
     public void setExplanation(String explanation) {
         this.explanation = explanation;
+    }
+
+    public void setKnownWord(boolean knownWord) {
+        this.knownWord = knownWord;
     }
 
     public String getFront() {
@@ -46,6 +52,10 @@ public class Card implements Parcelable {
 
     public boolean hasExplanation() {
         return !explanation.isEmpty();
+    }
+
+    public boolean isKnownWord() {
+        return knownWord;
     }
 
     @Override

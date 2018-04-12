@@ -12,6 +12,7 @@ import android.widget.Toast;
 /**
  * Activity for viewing a deck of flashcards.
  */
+//TODO: Send changed known word data back to main activity to update original copy of deck.
 public class ViewDeckActivity extends AppCompatActivity {
     private Deck deck;
     private Card currentCard; // Current card being displayed to the user.
@@ -24,17 +25,20 @@ public class ViewDeckActivity extends AppCompatActivity {
     private TextView explanation;
     private Button prevButton;
     private Button nextButton;
+    private Button knownWordButton;
     private Button explanationButton;
 
     private static final String GREY_COLOUR = "#C0C0C0";
     private static final String BLACK_COLOUR = "#000000";
     private static final boolean CARD_FRONT = true;
     private static final boolean CARD_BACK = false;
-    private static final String TAG = "FLASHCARDS";
+    static final String TAG = "FLASHCARDS";
 
     private static final String NO_EXPL_MSG = "This card has no explanation!";
     private static final String SHOW_EXPL = "Show Explanation";
     private static final String HIDE_EXPL = "Hide Explanation";
+    private static final String YES_KNOWN = "Remove from known words";
+    private static final String NOT_KNOWN = "Add to known words";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -43,6 +47,7 @@ public class ViewDeckActivity extends AppCompatActivity {
         prevButton = findViewById(R.id.button_prev);
         prevButton.setText("<");
         nextButton = findViewById(R.id.button_next);
+        knownWordButton = findViewById(R.id.button_known_word);
         explanationButton = findViewById(R.id.button_expl);
         explanation = findViewById(R.id.expl_text);
 
@@ -56,6 +61,8 @@ public class ViewDeckActivity extends AppCompatActivity {
         currentCard = deck.getCards().get(cardIndex); // Get current card in deck.
         flashcard.setText(currentCard.getFront());
 
+        // Set button functionality according to card contents and position.
+        setKnownWordButtonText();
         if (cardIndex == 0) {
             disableButton(prevButton);
         } else if (cardIndex == deck.size() - 1) {
@@ -88,6 +95,7 @@ public class ViewDeckActivity extends AppCompatActivity {
         // Call this even if the card is the same as before, to reset the view to the front of the
         // card.
         setCardContents();
+        setKnownWordButtonText();
 
         // Reset previous and next buttons.
         if (cardIndex == 0) {
@@ -130,6 +138,8 @@ public class ViewDeckActivity extends AppCompatActivity {
         if (cardIndex == 0) {
             disableButton(prevButton);
         }
+        // Reset known word button for new card.
+        setKnownWordButtonText();
     }
 
     public void onClickNextButton(View view) {
@@ -147,6 +157,8 @@ public class ViewDeckActivity extends AppCompatActivity {
         if (cardIndex == deck.size() - 1) {
             disableButton(nextButton);
         }
+        // Reset known word button for new card.
+        setKnownWordButtonText();
     }
 
     public void onClickExplanationButton(View view) {
@@ -162,6 +174,19 @@ public class ViewDeckActivity extends AppCompatActivity {
                 Toast.makeText(getApplicationContext(), NO_EXPL_MSG, Toast.LENGTH_SHORT).show();
             }
         }
+    }
+
+    public void onClickKnownWordButton(View view) {
+        String text;
+        if (currentCard.isKnownWord()) {
+            currentCard.setKnownWord(false);
+            text = "Removed " + currentCard.getFront() + " from known words";
+        } else {
+            currentCard.setKnownWord(true);
+            text = "Added " + currentCard.getFront() + " to known words";
+        }
+        Toast.makeText(this, text, Toast.LENGTH_SHORT).show();
+        setKnownWordButtonText();
     }
 
     // Set the card contents when a new card is being displayed.
@@ -193,5 +218,13 @@ public class ViewDeckActivity extends AppCompatActivity {
         explanation.setText("");
         showingExplanation = false;
         explanationButton.setText(SHOW_EXPL);
+    }
+
+    private void setKnownWordButtonText() {
+        if (currentCard.isKnownWord()) {
+            knownWordButton.setText(YES_KNOWN);
+        } else {
+            knownWordButton.setText(NOT_KNOWN);
+        }
     }
 }

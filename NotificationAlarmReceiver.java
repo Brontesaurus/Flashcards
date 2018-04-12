@@ -8,6 +8,8 @@ import android.os.Parcel;
 import android.support.v4.app.NotificationCompat;
 import android.support.v4.app.NotificationManagerCompat;
 
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Random;
 import java.util.UUID;
 
@@ -23,9 +25,34 @@ public class NotificationAlarmReceiver extends BroadcastReceiver {
         byte[] deckBytes = alarmIntent.getByteArrayExtra("deck_bytes");
         Parcel deckParcel = MainActivity.ParcelableUtil.unmarshall(deckBytes);
         Deck deck = new Deck(deckParcel);
-        // Pick a random card.
-        int cardIndex = new Random().nextInt(deck.size());
-        Card card = deck.getCards().get(cardIndex);
+
+        // Pick a random card. Shuffle deck and select first card that is not a known card.
+        ArrayList<Card> shuffledDeck = new ArrayList<>(deck.getCards());
+        Collections.shuffle(shuffledDeck);
+        int i;
+        for (i = 0; i < shuffledDeck.size(); i++) {
+            if (!shuffledDeck.get(i).isKnownWord()) {
+                break;
+            }
+        }
+        // If i is the size of the deck, then all of the cards are known cards, and this deck cannot
+        // be used for notifications. This should never happen, but if it does, skip this
+        // notification.
+        if (i == shuffledDeck.size()) {
+            return;
+        }
+        // Find index of chosen card in original deck.
+        Card card = shuffledDeck.get(i);
+        int cardIndex;
+        for (cardIndex = 0; cardIndex < deck.size(); cardIndex++) {
+            if (card.equals(deck.getCards().get(cardIndex))) {
+                break;
+            }
+        }
+        // Also skip notification if card cannot be found.
+        if (cardIndex == shuffledDeck.size()) {
+            return;
+        }
 
         // Notification stuff
         Intent notifIntent = new Intent(context, ViewDeckActivity.class);

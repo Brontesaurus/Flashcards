@@ -45,7 +45,7 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
         decks = new ArrayList<>();
         alarmManager = (AlarmManager) getSystemService(Context.ALARM_SERVICE);
-        bootReceiver = new ComponentName(this, bronte.flashcards.bootReceiver.class);
+        bootReceiver = new ComponentName(this, BootReceiver.class);
         packageManager = this.getPackageManager();
 
         generateFlashcards();

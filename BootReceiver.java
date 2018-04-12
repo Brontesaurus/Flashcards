@@ -7,11 +7,11 @@ import android.content.Intent;
 /**
  * BroadcastReceiver for resetting hourly notification alarm when device is rebooted.
  */
-public class bootReceiver extends BroadcastReceiver {
+public class BootReceiver extends BroadcastReceiver {
 
     private MainActivity mainActivity;
 
-    public bootReceiver(MainActivity mainActivity) {
+    public BootReceiver(MainActivity mainActivity) {
         this.mainActivity = mainActivity;
     }
 
